@@ -12,7 +12,7 @@ Sistem chat real-time berbasis room dengan WebSocket, menggunakan MongoDB untuk 
 
 ## Tech Stack
 
-- Backend: [Node.js/Python/sesuaikan]
+- Backend: [Node.js/Python]
 - Database: MongoDB (persistent storage)
 - Cache: Redis (session & message cache)
 - Real-time: WebSocket
