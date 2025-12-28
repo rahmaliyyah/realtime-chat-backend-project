@@ -1,0 +1,37 @@
+# Environment variables (PENTING! Jangan upload password/API key)
+.env
+.env.local
+.env.production
+*.env
+
+# Docker volumes dan data
+volumes/
+data/
+*.log
+
+# Database files
+*.sql
+*.sqlite
+*.db
+
+# Dependency directories
+node_modules/
+vendor/
+venv/
+__pycache__/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build files
+dist/
+build/
+*.pyc
+*.pyo

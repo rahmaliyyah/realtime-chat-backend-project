@@ -1,0 +1,95 @@
+version: '3.8'
+
+services:
+  # MongoDB Replica Set (Master-Slave)
+  mongo-primary:
+    image: mongo:7.0
+    container_name: mongo-primary
+    command: mongod --replSet rs0 --bind_ip_all
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-primary-data:/data/db
+    networks:
+      - chat-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mongo-secondary1:
+    image: mongo:7.0
+    container_name: mongo-secondary1
+    command: mongod --replSet rs0 --bind_ip_all
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongo-secondary1-data:/data/db
+    networks:
+      - chat-network
+    depends_on:
+      - mongo-primary
+
+  mongo-secondary2:
+    image: mongo:7.0
+    container_name: mongo-secondary2
+    command: mongod --replSet rs0 --bind_ip_all
+    ports:
+      - "27019:27017"
+    volumes:
+      - mongo-secondary2-data:/data/db
+    networks:
+      - chat-network
+    depends_on:
+      - mongo-primary
+
+  # Redis Standalone
+  redis:
+    image: redis:7-alpine
+    container_name: redis-standalone
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - chat-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API + WebSocket
+  backend:
+    build: ./backend
+    container_name: chat-backend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - MONGODB_URI=mongodb://mongo-primary:27017,mongo-secondary1:27017,mongo-secondary2:27017/chatdb?replicaSet=rs0
+      - REDIS_URL=redis://redis:6379
+      - SESSION_SECRET=your-super-secret-key-change-in-production
+    depends_on:
+      mongo-primary:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - chat-network
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+
+networks:
+  chat-network:
+    driver: bridge
+
+volumes:
+  mongo-primary-data:
+  mongo-secondary1-data:
+  mongo-secondary2-data:
+  redis-data:
